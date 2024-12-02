@@ -6,13 +6,17 @@ function iterative_solver(f, x0; α=0.0, ε=1e-6, maxiter=1000)
     iterations = [x0]
     residuals = []
     
-    # Iterate
     for i in 1:maxiter
+        # Compute g(x) = f(x) + x
         g_x = f(x_n) + x_n
+        
+        # Update x using the dampened formula
         x_next = (1 - α) * g_x + α * x_n
+        
+        # Compute difference
         diff = abs(x_next - x_n)
         
-        # Store residual and update current value
+        # Store residual and iteration
         push!(residuals, diff)
         push!(iterations, x_next)
         
@@ -25,7 +29,7 @@ function iterative_solver(f, x0; α=0.0, ε=1e-6, maxiter=1000)
         x_n = x_next
     end
     
-    # Return NaN if no solution found
+    # If no solution is found, return NaN
     return 1, NaN, NaN, NaN, iterations, residuals
 end
 
@@ -33,15 +37,91 @@ end
 f(x) = x^3 - x - 1
 
 # Test the function
-flag, solution, f_value, diff, iterations, residuals = iterative_solver(f, 1.0; α=0.5)
+flag, solution, f_value, diff, iterations, residuals = iterative_solver(f, 1.0; α=0.5, ε=1e-6, maxiter=100)
 
-# Print the results
+# Print debug output
 println("Flag (0 if solution found, 1 otherwise): $flag")
 println("Solution: $solution")
 println("f(solution): $f_value")
 println("Difference between iterations: $diff")
 println("All iterations: $iterations")
 println("All residuals: $residuals")
+
+
+
+
+# another version of Problem 1 
+
+
+function function_iter_method(func_f, x0, α, tol, maxiter)
+    # Initialize variables
+    delta_x_list = Float64[]
+    sol_tries_list = Float64[]
+    flag = false
+    iter_count = 1
+    resid = 1000.0
+
+    # Iterative process
+    while (iter_count < maxiter && resid > tol && resid < 10^5)
+        x1 = (1 - α) * (x0 + func_f(x0)) + α * x0
+        resid = abs(x1 - x0) / (1 + abs(x0))
+        
+        # Record results
+        push!(sol_tries_list, x1)
+        push!(delta_x_list, abs(x1 - x0))
+        
+        iter_count += 1
+        x0 = x1
+    end
+
+    if resid < tol
+        flag = true
+        f_x = func_f(x1)
+        abs_diff = abs(f_x)  # Absolute difference for convergence
+    else
+        x1 = NaN
+        f_x = NaN
+        abs_diff = NaN
+    end
+
+    return flag, x1, f_x, abs_diff, sol_tries_list, delta_x_list
+end
+
+# Define test functions
+test_func_1(x) = (x + 1)^(1/3) - x
+test_func_2(x) = x^3 - x - 1
+
+# Problem 1
+println("Problem 1 ================================")
+x0 = 1.0
+α = 0.8
+tol = 1e-6
+maxiter = 1000
+
+flag_1, root_1, f_x_1, abs_diff_1, sol_tries_list_1, delta_x_list_1 = function_iter_method(test_func_1, x0, α, tol, maxiter)
+
+println("Flag result: ", flag_1)
+println("Root result: ", root_1)
+println("f(root): ", test_func_1(root_1))
+
+# Problem 2
+println("Problem 2 ================================")
+x0 = 1.3247
+α = 1.0
+tol = 1e-6
+maxiter = 1000
+flag_2 = false
+α_step = 0.1
+
+while α > 0 && !flag_2
+    α -= α_step
+    flag_2, root_2, f_x_2, abs_diff_2, sol_tries_list_2, delta_x_list_2 = function_iter_method(test_func_2, x0, α, tol, maxiter)
+end
+
+println("Alpha result: ", α)
+println("Flag result: ", flag_2)
+println("Root result: ", root_2)
+println("f(root): ", test_func_2(root_2))
 
 
 # Problem 2 
